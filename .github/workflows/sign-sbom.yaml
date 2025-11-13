@@ -49,7 +49,7 @@ jobs:
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           scan-type: image
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.digest.outputs.digest }}
+          image-ref: "${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.digest.outputs.digest }}"
           format: "cyclonedx"
           output: "sbom.cyclonedx.json"
 
