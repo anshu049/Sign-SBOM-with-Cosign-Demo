@@ -27,20 +27,32 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and push Docker image
-        id: build
+      # Build and push by digest only
+      - name: Build and push image by digest
+        id: build-digest
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo
           outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo,push-by-digest=true,name-canonical=true
+
+      # Extract the digest
       - name: Get image digest
         id: digest
         run: |
-          DIGEST="${{ steps.build.outputs.digest }}"
-          echo "Image digest: $DIGEST"
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          echo "digest=${{ steps.build-digest.outputs.digest }}" >> $GITHUB_OUTPUT
+          echo "Image digest: ${{ steps.build-digest.outputs.digest }}"
 
+      # (Optional) Retag the digest as "latest"
+      - name: Push image with 'latest' tag
+        run: |
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.digest.outputs.digest }}
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.digest.outputs.digest }} \
+                     ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo:latest
+
+      # Generate SBOM
       - name: Generate SBOM (Trivy)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         with:
@@ -52,7 +64,7 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.0.0
 
-      - name: Check install
+      - name: Check Cosign
         run: cosign version
 
       - name: Sign Docker image (keyless)
