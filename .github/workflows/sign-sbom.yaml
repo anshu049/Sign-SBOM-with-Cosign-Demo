@@ -37,19 +37,19 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo
-          outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo,push-by-digest=true,name-canonical=true
+          # outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo,push-by-digest=true,name-canonical=true
 
       # 5️⃣ Extract digest
-      - name: Get image digest
-        id: digest
-        run: echo "digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+      # - name: Get image digest
+      #   id: digest
+      #   run: echo "digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
  
       # 6️⃣ Generate CycloneDX SBOM using Trivy Action
       - name: Generate SBOM (Trivy)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           scan-type: image
-          image-ref: "${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.digest.outputs.digest }}"
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.build-digest.outputs.digest }}
           format: "cyclonedx"
           output: "sbom.cyclonedx.json"
 
