@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo:latest
  
       # 5️⃣ Generate CycloneDX SBOM using Trivy Action
       - name: Generate SBOM (Trivy)
