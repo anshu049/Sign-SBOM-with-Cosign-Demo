@@ -37,14 +37,8 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo
-          # outputs: type=image,name=${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo,push-by-digest=true,name-canonical=true
-
-      # 5️⃣ Extract digest
-      # - name: Get image digest
-      #   id: digest
-      #   run: echo "digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
  
-      # 6️⃣ Generate CycloneDX SBOM using Trivy Action
+      # 5️⃣ Generate CycloneDX SBOM using Trivy Action
       - name: Generate SBOM (Trivy)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
@@ -53,29 +47,29 @@ jobs:
           format: "cyclonedx"
           output: "sbom.cyclonedx.json"
 
-      # 7️⃣ Install Cosign
+      # 6️⃣ Install Cosign
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.0.0
 
-      # 8️⃣ Sign container image (SHA digest)
+      # 7️⃣ Sign container image (SHA digest)
       - name: Sign image by digest
         env:
           COSIGN_EXPERIMENTAL: "true"
         run: |
           cosign sign --yes \
-          ${{ secrets.DOCKERHUB_USERNAME }}/trivydemo@${{ steps.digest.outputs.digest }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/trivydemo@${{ steps.build-digest.outputs.digest }}
       
-      # 9️⃣ Verify image signature
+      # 8️⃣ Verify image signature
       - name: Verify image signature
         env:
           COSIGN_EXPERIMENTAL: "true"
         run: |
           cosign verify \
-            ${{ secrets.DOCKERHUB_USERNAME }}/trivydemo@${{ steps.digest.outputs.digest }} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/trivydemo@${{ steps.build-digest.outputs.digest }} \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             --certificate-identity-regexp "https://github.com/.*/actions/runs/.*"
 
-      # 🔟 Sign SBOM
+      # 9️⃣ Sign SBOM
       - name: Sign CycloneDX SBOM
         env:
           COSIGN_EXPERIMENTAL: "true"
@@ -83,7 +77,7 @@ jobs:
           cosign sign-blob --yes sbom.cyclonedx.json \
             --bundle sbom.cyclonedx.signed.json
 
-      # 1️⃣1️⃣ Verify SBOM signature
+      # 🔟 Verify SBOM signature
       - name: Verify SBOM signature
         env:
           COSIGN_EXPERIMENTAL: "true"
@@ -94,7 +88,7 @@ jobs:
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             --certificate-identity-regexp "https://github.com/.*/actions/runs/.*"
         
-      # 1️⃣2️⃣ Upload SBOM + signature
+      # 1️⃣1️⃣ Upload SBOM + signature
       - name: Upload SBOM Artifacts
         uses: actions/upload-artifact@v4
         with:
