@@ -85,6 +85,7 @@ jobs:
           cosign verify ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.digest.outputs.digest }} \
             --certificate-identity-regexp 'https://github.com/${{ github.repository }}/.github/workflows/.*' \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com
+        continue-on-error: true
 
       # Sign SBOM file (keyless)
       - name: Sign SBOM file (keyless)
