@@ -57,7 +57,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "true"
         run: |
           cosign sign --yes \
-          ${{ secrets.DOCKERHUB_USERNAME }}/trivydemo@${{ steps.build-digest.outputs.digest }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.build-digest.outputs.digest }}
       
       # 8️⃣ Verify image signature
       - name: Verify image signature
@@ -65,7 +65,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "true"
         run: |
           cosign verify \
-            ${{ secrets.DOCKERHUB_USERNAME }}/trivydemo@${{ steps.build-digest.outputs.digest }} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.build-digest.outputs.digest }} \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             --certificate-identity-regexp "https://github.com/.*/actions/runs/.*"
 
