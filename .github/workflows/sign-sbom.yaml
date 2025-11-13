@@ -58,7 +58,6 @@ jobs:
         run: |
           cosign sign --yes \
           ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.build-digest.outputs.digest }}
-        continue-on-error: true
       
       # 8️⃣ Verify image signature
       - name: Verify image signature
@@ -69,6 +68,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/sbomdemo@${{ steps.build-digest.outputs.digest }} \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             --certificate-identity-regexp "https://github.com/.*/actions/runs/.*"
+        continue-on-error: true
 
       # 9️⃣ Sign SBOM
       - name: Sign CycloneDX SBOM
