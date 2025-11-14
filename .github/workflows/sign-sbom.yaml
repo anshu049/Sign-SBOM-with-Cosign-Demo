@@ -52,11 +52,12 @@ jobs:
       # Upload SBOM to Github Dependency Graph (Github format)
       - name: Upload SBOM to Dependecy Graph
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        scan-type: 'fs'
-        format: 'github'
-        output: 'dependecy-results.sbom.json'
-        scan-ref: '.'
-        github-pat: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          scan-type: 'fs'
+          format: 'github'
+          output: 'dependecy-results.sbom.json'
+          scan-ref: '.'
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       # Install Cosign
       - name: Install Cosign
