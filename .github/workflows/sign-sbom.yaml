@@ -40,21 +40,15 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/sbomdemo:${{ github.sha }}
  
-      # Generate CycloneDX SBOM using Trivy Action
-      - name: Generate SBOM (Trivy)
+      # Generate SBOM and Upload to Github Dependecy Graph (Trivy)
+      - name: Generate SBOM and Submit to Dependecy Graph
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           scan-type: image
           image-ref: ghcr.io/${{ github.repository_owner }}/sbomdemo@${{ steps.build-digest.outputs.digest }}
           format: "cyclonedx"
           output: "sbom.cyclonedx.json"
-
-      # Upload SBOM snapshot to Github Dependecy Graph
-      - name: Upload SBOM to Dependecy Graph (Anchore)
-        uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 # v0.20.9
-        with:
-          sbom: sbom.cyclonedx.json
-          dependency-snapshot: true
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       # Install Cosign
       - name: Install Cosign
