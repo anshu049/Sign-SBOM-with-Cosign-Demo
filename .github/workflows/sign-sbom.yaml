@@ -10,20 +10,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write
+      security-events: write
 
     steps:
-      # 1️⃣ Checkout source code
+      # Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # 2️⃣ Setup Docker Buildx
+      # Setup Docker Buildx
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3️⃣ Log in to Github Container Registry
+      # Log in to Github Container Registry
       - name: Log in to Github Container Registry
         uses: docker/login-action@v3
         with:
@@ -31,7 +32,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 4️⃣ Build & push image — output digest
+      # Build & push image — output digest
       - name: Build and push image by digest
         id: build-digest
         uses: docker/build-push-action@v6
@@ -39,7 +40,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/sbomdemo:${{ github.sha }}
  
-      # 5️⃣ Generate CycloneDX SBOM using Trivy Action
+      # Generate CycloneDX SBOM using Trivy Action
       - name: Generate SBOM (Trivy)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
@@ -48,11 +49,18 @@ jobs:
           format: "cyclonedx"
           output: "sbom.cyclonedx.json"
 
-      # 6️⃣ Install Cosign
+      # Upload SBOM snapshot to Github Dependecy Graph
+      - name: Upload SBOM to Dependecy Graph (Anchore)
+        uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 # v0.20.9
+        with:
+          sbom: sbom.cyclonedx.json
+          dependency-snapshot: true
+
+      # Install Cosign
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.0.0
 
-      # 7️⃣ Sign container image (SHA digest)
+      # Sign container image (SHA digest)
       - name: Sign image by digest
         env:
           COSIGN_EXPERIMENTAL: "true"
@@ -60,7 +68,7 @@ jobs:
           cosign sign --yes \
           ghcr.io/${{ github.repository_owner }}/sbomdemo@${{ steps.build-digest.outputs.digest }}
       
-      # 8️⃣ Verify image signature
+      # Verify image signature
       - name: Verify image signature
         env:
           COSIGN_EXPERIMENTAL: "true"
@@ -70,7 +78,7 @@ jobs:
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             --certificate-identity-regexp "^https://github.com/${{ github.repository }}/\.github/workflows/.*@refs/.*$"
 
-      # 9️⃣ Sign SBOM
+      # Sign SBOM
       - name: Sign CycloneDX SBOM
         env:
           COSIGN_EXPERIMENTAL: "true"
@@ -78,7 +86,7 @@ jobs:
           cosign sign-blob --yes sbom.cyclonedx.json \
             --bundle sbom.cyclonedx.signed.json
 
-      # 🔟 Verify SBOM signature
+      # Verify SBOM signature
       - name: Verify SBOM signature
         env:
           COSIGN_EXPERIMENTAL: "true"
@@ -89,7 +97,7 @@ jobs:
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             --certificate-identity-regexp "^https://github.com/${{ github.repository }}/\.github/workflows/.*@refs/.*$"
         
-      # 1️⃣1️⃣ Upload SBOM + signature
+      # Upload SBOM + signature
       - name: Upload SBOM Artifacts
         uses: actions/upload-artifact@v4
         with:
